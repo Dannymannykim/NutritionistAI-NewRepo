@@ -1,0 +1,46 @@
+program: item_detector2.py
+method: random #bayes
+metric:
+  goal: minimize
+  name: train/seg_loss
+parameters:
+  lr0:
+    distribution: log_uniform_values
+    max: 0.001
+    min: 0.00001
+  lrf:
+    distribution: uniform
+    max: 1.0
+    min: 0.01
+  momentum:
+    distribution: uniform
+    max: 0.95
+    min: 0.8
+  cls:
+    distribution: uniform
+    max: 4.0
+    min: 0.2
+  box:
+    distribution: uniform
+    max: 0.2
+    min: 0.02
+  hsv_h:
+    distribution: uniform
+    max: 0.1
+    min: 0.0
+  translate:
+    distribution: uniform
+    max: 0.9
+    min: 0.0
+  degrees:
+    distribution: uniform
+    max: 45
+    min: 0
+  scale:
+    distribution: uniform
+    max: 0.9
+    min: 0.0
+  mosaic:
+    distribution: uniform
+    max: 1.0
+    min: 0.0

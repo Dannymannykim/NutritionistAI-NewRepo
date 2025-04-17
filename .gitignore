@@ -1,0 +1,15 @@
+/env/
+/venv/
+env/
+venv/
+envs/
+/envs/
+annotations_coco/
+annotations_yolo/
+datasets/
+runs/
+models/pretrained/
+wandb/
+true_masks/
+yolo11n.pt
+yolov8n-seg.pt
