@@ -1,0 +1,51 @@
+external:
+  model_pth: "./models/pretrained/yolo11m-seg.pt"
+  process: train
+  cross_val: false
+train:
+  epochs: 50
+  batch: 8   # best batch size depends on model used; [obsolete] 32 seems best; 64 too much
+  optimizer: auto  # "AdamW" also possible
+  imgsz: 640  # 768 seems to error
+  freeze: null  # e.g., 11 to freeze backbone layers
+  fraction: 1.0
+  classes: null
+  rect: false  # not compatible with wandb sweep due to resize error
+  multi_scale: false
+  cos_lr: false  # False if low epochs; True may help convergence over long runs
+  overlap_mask: false  # False for instance seg probably
+  cache: disk  # "True" / "ram" may be faster
+  save: true
+  val: true   # wandb sweep requires val=True; validation runs every 5 epochs by default
+  plots: true # produces evaluation plots for W&B
+  seed: 0
+  use_wandb: true
+  # exist_ok: false
+  # workers: 8
+  # cfg: "D:\\Work\\ML_Projects\\food_classifier\\custom_default.yaml"
+  # val_interval: 5
+  # half:
+tune:
+  iterations: 20
+  use_ray: true
+  use_sweep: false
+  grace_period: 10   # only with ray
+  search_space:
+    lr0: [1e-5, 1e-1]          # Initial learning rate (log scale intended)
+    lrf: [0.01, 1.0]           # Final learning rate factor
+    momentum: [0.8, 0.95]      # Momentum
+    # weight_decay: [0.0, 0.001]    # Weight decay (def: 0.0005)
+    # warmup_epochs: [1.0, 5.0]     # Warmup epochs (def: 3)
+    # warmup_momentum: [0.0, 0.95]  # (def: 0.8)
+    box: [0.02, 0.2]           # Box loss weight
+    cls: [0.2, 4.0]            # Class loss weight
+    hsv_h: [0.0, 0.1]          # Hue augmentation range
+    translate: [0.0, 0.9]      # Translation augmentation range
+    degrees: [0.0, 45.0]       # Rotation
+    scale: [0.0, 0.9]          # Image scale
+    # shear: [0.0, 10.0]        # Optional: Shear (not recommended)
+    # perspective: [0.0, 0.001] # Optional: Perspective (not recommended)
+    # flipud: [0.0, 0.5]        # Flip upside down (not recommended)
+    fliplr: [0.0, 1.0]         # Flip left right
+    mosaic: [0.0, 1.0]         # Use of mosaic augmentation (be cautious)
+    # copy_paste: [0.0, 1.0]    # Copy-paste augmentation (be cautious)

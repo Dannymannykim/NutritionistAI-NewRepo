@@ -6,32 +6,32 @@ test: # test images (optional)
 
 # Classes
 names:
-  0: candy
-  1: egg tart
-  2: french fries
-  3: chocolate
-  4: biscuit
-  5: popcorn
-  6: pudding
-  7: ice cream
+  0: candy #
+  1: egg tart #
+  2: french fries # may be easier to classify due to unique shape so consider it
+  3: chocolate # consider
+  4: biscuit # includes crackers
+  5: popcorn #
+  6: pudding #
+  7: ice cream # create yogurt class instead
   8: cheese butter
-  9: cake
-  10: wine
-  11: milkshake
-  12: coffee
-  13: juice
-  14: milk
-  15: tea
-  16: almond
+  9: cake #
+  10: wine #
+  11: milkshake #
+  12: coffee #
+  13: juice #
+  14: milk #
+  15: tea #
+  16: almond 
   17: red beans
   18: cashew
   19: dried cranberries
-  20: soy
+  20: soy # consider
   21: walnut
   22: peanut
   23: egg
   24: apple
-  25: date
+  25: date #
   26: apricot
   27: avocado
   28: banana
@@ -44,7 +44,7 @@ names:
   35: peach
   36: lemon
   37: pear
-  38: fig
+  38: fig #
   39: pineapple
   40: grape
   41: kiwi
@@ -62,29 +62,29 @@ names:
   53: fish
   54: shellfish
   55: shrimp
-  56: soup
+  56: soup #
   57: bread
   58: corn
   59: hamburg
   60: pizza
-  61: hanamaki baozi
+  61: hanamaki baozi #
   62: wonton dumplings
   63: pasta
-  64: noodles
+  64: noodles #
   65: rice
   66: pie
   67: tofu
   68: eggplant
-  69: potato
+  69: potato 
   70: garlic
   71: cauliflower
   72: tomato
-  73: kelp
+  73: kelp #
   74: seaweed
   75: spring onion
-  76: rape
+  76: rape #
   77: ginger
-  78: okra
+  78: okra #
   79: lettuce
   80: pumpkin
   81: cucumber
@@ -95,17 +95,17 @@ names:
   86: broccoli
   87: celery stick
   88: cilantro mint
-  89: snow peas
+  89: snow peas # rename to just peas
   90: cabbage
   91: bean sprouts
   92: onion
   93: pepper
-  94: green beans
-  95: French beans
-  96: king oyster mushroom
+  94: green beans 
+  95: French beans # add to green beans
+  96: king oyster mushroom # rename to just mushroom
   97: shiitake
-  98: enoki mushroom
-  99: oyster mushroom
-  100: white button mushroom
+  98: enoki mushroom # add to mushroom
+  99: oyster mushroom # add to mushroom
+  100: white button mushroom # add to mushroom
   101: salad
   102: other ingredients

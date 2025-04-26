@@ -16,8 +16,8 @@ if __name__ == "__main__":
     # Example usage:
     #folder = "anotations_yolo/labels/foodins_train"
     target_class = 99  # class you’re searching for
-    move = True
-    copy = False
+    move = False
+    copy = False 
     folder_images = "datasets/partial/images/train"
     folder_labels = "datasets/partial/labels/train"
     folder_dest = "datasets/partial/removed/" + str(target_class)

@@ -12,32 +12,42 @@ import matplotlib.pyplot as plt
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from sklearn.model_selection import StratifiedKFold
 
-def create_folds(ksplit, yaml_file, source, dest, render_class_dist=False, only_dist=False, stratified=False, seed=0, name=""):
+def create_folds(
+      ksplit, 
+      yaml_file, 
+      source, 
+      dest, 
+      render_class_dist=False, 
+      only_dist=False, 
+      stratified=False, 
+      seed=0, 
+      name=""
+   ):
+
    """
    Splits a dataset into k-folds for cross-validation, organizing images and labels accordingly.
 
-   Parameters
-   -----------
-   ksplit : int
-      Number of folds to create in the dataset split.
-   yaml_file : str or Path
-      File path to the dataset YAML file. This YAML should contain metadata including dataset paths and class definitions.
-      Example: "./datasets/full/coco_seg.yaml"
-   source : Path
-      Path to the original dataset directory containing subdirectories 'images' and 'labels'.
-      Example: Path("./datasets/full")
-   dest : Path
-      Destination path where the k-fold directories will be created and saved.
-      Each fold will be a subdirectory here.
-      Example: Path("./datasets/cv")
-   render_class_dist : bool, optional (default=False)
-      If True, displays class distribution and validation-to-training ratio statistics for each fold.
-   only_dist : bool, optional (default=False)
-      If True, only display class distribution heatmap without creating folds.
-   seed : int, optional (default=0)
-      Random seed for reproducibility of the dataset splitting process.
-   name : str, optional (default="")
-      Name for fold directory "cv_{kfold}_{split}{name}".
+   Args:
+      ksplit (int):
+         Number of folds to create in the dataset split.
+      yaml_file (str or Path):
+         File path to the dataset YAML file. This YAML should contain metadata including dataset paths and class definitions.\n
+         Example: "./datasets/full/coco_seg.yaml"
+      source : Path
+         Path to the original dataset directory containing subdirectories 'images' and 'labels'.
+         Example: Path("./datasets/full")
+      dest : Path
+         Destination path where the k-fold directories will be created and saved.
+         Each fold will be a subdirectory here.
+         Example: Path("./datasets/cv")
+      render_class_dist : bool, optional (default=False)
+         If True, displays class distribution and validation-to-training ratio statistics for each fold.
+      only_dist : bool, optional (default=False)
+         If True, only display class distribution heatmap without creating folds.
+      seed : int, optional (default=0)
+         Random seed for reproducibility of the dataset splitting process.
+      name : str, optional (default="")
+         Name for fold directory "cv_{kfold}_{split}{name}".
 
    Returns
    -------
@@ -45,13 +55,13 @@ def create_folds(ksplit, yaml_file, source, dest, render_class_dist=False, only_
       The function creates the folder structure and copies/moves files but does not return any value.
    """
    
-   # Retrieve classes (names) from source yaml file to write into new .yaml's later
+   # retrieve classes (names) from source yaml file to write into new .yaml's later
    with open(yaml_file, encoding="utf8") as y:
       classes = yaml.safe_load(y)["names"] 
    cls_idx = sorted(classes.keys())
    
-   # Retrieve all the annotation (label .txt) files and creates df that indicates number of class instances for each label.
-   # This is needed to ensure correctness when labels start at arbitrary numbers.
+   # retrieve all the annotation (label .txt) files and creates df that indicates number of class instances for each label.
+   # this is needed to ensure correctness when labels start at arbitrary numbers.
    labels = sorted(source.rglob("labels/**/*.txt"))
    index = [label.stem for label in labels]  # uses base filename as ID (no extension)
    labels_df = pd.DataFrame([], columns=cls_idx, index=index)
@@ -69,7 +79,7 @@ def create_folds(ksplit, yaml_file, source, dest, render_class_dist=False, only_
 
    labels_df = labels_df.fillna(0.0)
 
-   # Creates a df indicating train or val for each label in each fold.
+   # creates a df indicating train or val for each label in each fold.
    random.seed(seed)  # for reproducibility
    kf = KFold(n_splits=ksplit, shuffle=True, random_state=seed) 
    
@@ -96,19 +106,19 @@ def create_folds(ksplit, yaml_file, source, dest, render_class_dist=False, only_
       folds_df.loc[labels_df.iloc[train].index, f"split_{i}"] = "train"
       folds_df.loc[labels_df.iloc[val].index, f"split_{i}"] = "val"
 
-   # Gather img files -> loop through folds -> Create necessary directories and .yaml files
+   # gather img files -> loop through folds -> Create necessary directories and .yaml files
    supported_extensions = [".jpg", ".jpeg", ".png"]
 
    images = [] # store image file paths
 
-   for ext in supported_extensions: # Loop through supported extensions and gather image files
+   for ext in supported_extensions: # loop through supported extensions and gather image files
       images.extend(sorted((source / "images").rglob(f"*{ext}")))
    
    save_path = Path(dest / f"cv_{ksplit}_{seed}{name}")
    save_path.mkdir(parents=True, exist_ok=False)
    ds_yamls = []
 
-   # Creates df of the val to train ratio of each class for each label.
+   # creates df of the val to train ratio of each class for each label.
    if render_class_dist:
       fold_lbl_distrb = pd.DataFrame(index=folds, columns=cls_idx)
       for n, (train_indices, val_indices) in enumerate(kfolds, start=1):
@@ -168,4 +178,12 @@ if __name__ == "__main__":
    dataset_config_yaml = str(next(dataset_pth.glob("*.yaml"), None))
    dest_pth = Path("./datasets/cv")
    
-   create_folds(ksplit=5, yaml_file=dataset_config_yaml, source=dataset_pth, dest=dest_pth, render_class_dist=True, stratified=True, name="-stratified-visual-test")
+   create_folds(
+      ksplit=5, 
+      yaml_file=dataset_config_yaml, 
+      source=dataset_pth, 
+      dest=dest_pth,
+      render_class_dist=True, 
+      stratified=True, 
+      name="-stratified-visual-test"
+   )

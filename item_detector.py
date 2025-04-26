@@ -17,6 +17,7 @@ import yaml
 #import wandb
 #from wandb.integration.ultralytics import add_wandb_callback
 from ultralytics import settings, cfg
+from utils import compile_args
 
 # monkey-patch tuner (for ray tune optuna)
 import ultralytics.utils.tuner as tuner_mod
@@ -691,11 +692,120 @@ tuner_mod.run_ray_tune = custom_ray_tune
 trainer_mod.BaseTrainer._do_train = custom_do_train
 
 if __name__ == '__main__':
+   # Idea is to classify food images -> connect to some api to calculate and display nutrient info -> feed into 
+   # LLM for pros/cons
+   # Big idea: perhaps have the LLM also take in the original classifications and try to correct certain suspicious classification
+   # or ambiguities like butter/cheese.
    #import warnings
    #warnings.filterwarnings("ignore", category=UserWarning, module="wandb")
    
+   # Note on annotation: combine overlapped objects for one bounding box
+
+   # Let's get to know our "dream customers". Nutrition AIs are generally for health enthusiasts or gymers. 
+   # I personally relate more with the gymers so that helps narrow down the number of classes (e.g. remove desserts, food items like pancakes, etc)
+      # another reason to remove a class may be due to its similarity with another class; choose what's prio
+      # for similar classes like yogurt/ranch consider having llm classify ranch or yogurt given the other classes.
+         # ranch/yogurt next to cucumber most likely yogurt even if the items arent dessert.
+   # Also remove raw ingredients like a whole onion, since that's unlikely to be a meal prep dish.
+
+   # test if ingredients like potato do well bc currently we combine roasted potatoes with mashed.
+
+   # estimate overlaps using bounding box. if they intersect blah blah
+
+   # fried meat instead of fried chickne/cutlet/etc
+
+   # Note: box scsore may not be the most accurate metric bc some ingredients are combined as one whole like clustered aspharagas
+
+   # Do we want FPs or FNs?: We want to reduce FNs. FPs are fine bc many annotations dont always mask every parts of an ingredient so if
+   # the model predicts a class for an unmasked area, the FP will be higher when it's actually correct.
+   # 
+
+   # context: rice + blueberry + sauce most likely peanutbutter = oatmeal
+
+   # consider removing ingredients like spring onion.
+
    cv_path = Path("D:/Work/ML_projects/food_classifier/datasets/cv/cv_5_0-unstratified-visual")
 
+   chosen_classes = [
+      "cheese butter",
+      "almond",
+      "red beans",
+      "cashew",
+      "dried cranberries",
+      "walnut",
+      "peanut",
+      "egg",
+      "apple",
+      "apricot",
+      "avocado",
+      "banana",
+      "strawberry",
+      "cherry",
+      "blueberry",
+      "raspberry",
+      "mango",
+      "olives",
+      "peach",
+      "lemon",
+      "pear",
+      "pineapple",
+      "grape",
+      "kiwi",
+      "melon",
+      "orange",
+      "watermelon",
+      "steak",
+      "pork",
+      "chicken duck",
+      "sausage",
+      "fried meat",
+      "lamb",
+      "sauce",
+      "crab",
+      "fish",
+      "shellfish",
+      "shrimp",
+      "bread",
+      "corn",
+      "hamburg",
+      "pizza",
+      "wonton dumplings",
+      "pasta",
+      "rice",
+      "pie",
+      "tofu",
+      "eggplant",
+      "potato",
+      "garlic",
+      "cauliflower",
+      "tomato",
+      "seaweed",
+      "spring onion",
+      "ginger",
+      "lettuce",
+      "pumpkin",
+      "cucumber",
+      "white radish",
+      "carrot",
+      "asparagus",
+      "bamboo shoots",
+      "broccoli",
+      "celery stick",
+      "cilantro mint",
+      "cabbage",
+      "bean sprouts",
+      "onion",
+      "pepper",
+      "green beans",
+      "king oyster mushroom",
+      "shiitake",
+      "enoki mushroom",
+      "oyster mushroom",
+      "white button mushroom",
+      "salad",
+      "other ingredients"
+   ]
+   
    params1 = {
       "lr0": 0.07552710906155273,
       "batch": 16
@@ -775,8 +885,26 @@ if __name__ == '__main__':
    model_pth = "./models/pretrained/yolo11m-seg.pt" # medium seems to do best
    process = 'train'
    cross_val = False
+
+   external_args, train_args, tune_args = compile_args("./config.yaml")
+
+   process = external_args['process']
+   model_pth = external_args['model_pth'] # medium seems to do best
+   cross_val = external_args['cross_val']
+
+   if process == 'tune':
+       
+
+   full_args = {**train_args, **tune_args}
+   
+   full_args
+   # Note: tuning takes both train and tune args
    run_process(model_pth, cv_path, train_args, tune_args, params2, process, cross_val) # for reg training perhaps add wandb callback
 
+   run_process(
+       process=process
+
+   )
    # consider running val on training set
    #results = model.val(data='path/to/your/data.yaml', task='test') # add json_save; maybe split not task
    raise ImportError
