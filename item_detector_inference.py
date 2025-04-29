@@ -13,8 +13,8 @@ if __name__ == '__main__':
     #results = model2.val(data="coco_seg.yaml", imgsz=640, plots=True, project="runs/segment/vals", split="val", conf=0.34)
 
     results2 = model2.predict("datasets/full/images/train", save=True, imgsz=640, visualize=False, show=False, save_txt=False, save_crop=True, show_boxes=False, stream=True, project="runs/segment/predicts")
-   # getting numbers ofingredients often wrong. consider adding peanutbutter
-   # look into f1 confidence curve.
+    # getting numbers ofingredients often wrong. consider adding peanutbutter
+    # look into f1 confidence curve.
 
     for r in results2: # stream=True returns a generator which you can loop over
         pass

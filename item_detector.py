@@ -312,13 +312,10 @@ def run_tune(model, data, args, hyperparams, project=None, name=None):
       ultralytic_tune(model, data, project=project, name=name, **args)
 
 def run_process(
-      model_pth,
-      cv_path, 
-      train_args, 
-      tune_args, 
+      process,
+      process_args,
+      external_args,
       hyperparameters, 
-      process='train', 
-      cross_val=False,
       project=None
    ): # check if setting configs_train and tune = None still works
    """
@@ -330,32 +327,33 @@ def run_process(
    process: process to run ("train" or "tune"; default is "train")
    cross_val: boolean to indicate whether to run cross-validation.
    """
-   run_fn = run_train if process == 'train' else run_tune
-   
-   if process == 'train':
-      tune_args = {}
+   process = external_args['process']
+   model_pth = external_args['model_pth']
+   cross_val = external_args['cross_val']
 
-   use_wandb = train_args.get('use_wandb', False)
-   
-   if use_wandb and not tune_args.get('use_ray', False): # the 2nd condition is to prevent wandb from running twice (logging from both ultralytics and ray integration)
+   run_fn = run_train if process == 'train' else run_tune
+
+   use_wandb = process_args.get('use_wandb', False)
+   if use_wandb and not process_args.get('use_ray', False): # the 2nd condition is to prevent wandb from running twice (logging from both ultralytics and ray integration)
       settings.update({'wandb': True})
    else:
       settings.update({'wandb': False})
 
    if process == 'train': # only for train bc need to pass "use_wandb" arg to monkey-patched ray integration fn
-      train_args.pop('use_wandb', False)
+      process_args.pop('use_wandb', False)
 
-   full_args = {**train_args, **tune_args}
-   
    # Set up and run tuning w/o cross validation
    if not cross_val:
       model = YOLO(model_pth)
-      dataset_config_yaml = "D:/Work/ML_projects/food_classifier/datasets/full/coco_seg.yaml"
+
+      dataset_config_yaml = external_args['dataset']
       
-      run_fn(model, data=dataset_config_yaml, args=full_args, hyperparams=hyperparameters, project=project)
+      run_fn(model, data=dataset_config_yaml, args=process_args, hyperparams=hyperparameters, project=project)
       #print(model.names)
       return
    
+   cv_path = external_args['cv_path']
+   cv_path = Path(cv_path)
    # Set up and run tuning w/ cross validation
    ds_yamls = list(cv_path.rglob("*.yaml"))
    results = {}
@@ -368,7 +366,7 @@ def run_process(
    for k, dataset_yaml in enumerate(ds_yamls):
       model = YOLO(model_pth) # for training we may want to use one model
       
-      results[k] = run_fn(model, str(dataset_yaml), args=full_args, hyperparams=hyperparameters, project=project, name=f"{name}_fold{k+1}")
+      results[k] = run_fn(model, str(dataset_yaml), args=process_args, hyperparams=hyperparameters, project=project, name=f"{name}_fold{k+1}")
      
    return results
    
@@ -688,43 +686,10 @@ def custom_do_train(self, world_size=1):
    unset_deterministic()
    self.run_callbacks("teardown")
 
-tuner_mod.run_ray_tune = custom_ray_tune
-trainer_mod.BaseTrainer._do_train = custom_do_train
+tuner_mod.run_ray_tune = custom_ray_tune # monkey-patch for optuna and custom search
+trainer_mod.BaseTrainer._do_train = custom_do_train # monkey-patch for validation interval (set to 5)
 
 if __name__ == '__main__':
-   # Idea is to classify food images -> connect to some api to calculate and display nutrient info -> feed into 
-   # LLM for pros/cons
-   # Big idea: perhaps have the LLM also take in the original classifications and try to correct certain suspicious classification
-   # or ambiguities like butter/cheese.
-   #import warnings
-   #warnings.filterwarnings("ignore", category=UserWarning, module="wandb")
-   
-   # Note on annotation: combine overlapped objects for one bounding box
-
-   # Let's get to know our "dream customers". Nutrition AIs are generally for health enthusiasts or gymers. 
-   # I personally relate more with the gymers so that helps narrow down the number of classes (e.g. remove desserts, food items like pancakes, etc)
-      # another reason to remove a class may be due to its similarity with another class; choose what's prio
-      # for similar classes like yogurt/ranch consider having llm classify ranch or yogurt given the other classes.
-         # ranch/yogurt next to cucumber most likely yogurt even if the items arent dessert.
-   # Also remove raw ingredients like a whole onion, since that's unlikely to be a meal prep dish.
-
-   # test if ingredients like potato do well bc currently we combine roasted potatoes with mashed.
-
-   # estimate overlaps using bounding box. if they intersect blah blah
-
-   # fried meat instead of fried chickne/cutlet/etc
-
-   # Note: box scsore may not be the most accurate metric bc some ingredients are combined as one whole like clustered aspharagas
-
-   # Do we want FPs or FNs?: We want to reduce FNs. FPs are fine bc many annotations dont always mask every parts of an ingredient so if
-   # the model predicts a class for an unmasked area, the FP will be higher when it's actually correct.
-   # 
-
-   # context: rice + blueberry + sauce most likely peanutbutter = oatmeal
-
-   # consider removing ingredients like spring onion.
-
-   cv_path = Path("D:/Work/ML_projects/food_classifier/datasets/cv/cv_5_0-unstratified-visual")
 
    chosen_classes = [
       "cheese butter",
@@ -805,105 +770,27 @@ if __name__ == '__main__':
       "salad",
       "other ingredients"
    ]
-   
-   params1 = {
-      "lr0": 0.07552710906155273,
-      "batch": 16
-   }
 
-   params2 = {
-
-   }
-   
-   search_space_freeze = {
-      "lr0": (1e-5, 1e-1),          # Initial learning rate (log scale intended)
-      "lrf": (0.01, 1.0),           # Final learning rate factor
-      "freeze": [11],
-      "momentum": (0.8, 0.95),      # Momentum
-      #"weight_decay": (0.0, 0.001)
-   }
-
-   search_space = {
-      "lr0": (1e-5, 1e-1),          # Initial learning rate (log scale intended)
-      "lrf": (0.01, 1.0),           # Final learning rate factor
-      "momentum": (0.8, 0.95),      # Momentum
-      ##"weight_decay": (0.0, 0.001), # Weight decay (def: 0.0005)
-      ##"warmup_epochs": (1.0, 5.0),  # Warmup epochs (def: 3)
-      ##"warmup_momentum": (0.0, 0.95), # (def: 0.8)
-      "box": (0.02, 0.2),           # Box loss weight
-      "cls": (0.2, 4.0),            # Class loss weight
-      "hsv_h": (0.0, 0.1),          # Hue augmentation range
-      "translate": (0.0, 0.9),      # Translation augmentation range
-      "degrees": (0.0, 45.0),       # Rotation
-      "scale": (0.0, 0.9),          # Image scale
-      # "shear": (0.0, 10.0),        # Optional: Shear (not recommended)
-      # "perspective": (0.0, 0.001), # Optional: Perspective (not recommended)
-      # "flipud": (0.0, 0.5),        # Flip upside down (not recommended)
-      "fliplr": (0.0, 1.0),         # Flip left right
-      "mosaic": (0.0, 1.0),        # Use of mosaic augmentation (be cautious)
-      # "copy_paste": (0.0, 1.0),    # Copy-paste augmentation (be cautious)
-   }
-
-   train_args = {
-      "epochs": 50,
-      "batch": 8, # best batch size depends on model used; [obsolete] 32 seems to be best for GPU and CPU usage (2x faster than 16); 64 is too much and takes much longer 
-      "optimizer": "auto",#"AdamW",
-      "imgsz": 640, # 768 seems to error
-      "freeze": None,#11,
-      "fraction": 1.0,#1.0,
-      "classes": None,
-      "rect": False, # not compatible with wandb sweep due to resize error
-      "multi_scale": False,
-      "cos_lr": False, # False if low # of epochs; True may lead to better convergence over time.
-      "overlap_mask": False, # False for instance seg prob
-      "cache": "disk", # no noticeable change but "True" / "ram" may be faster
-      "save": True,
-      #"exist_ok": False,
-      "val": True, # set True to perform valdiation every epoch; otherwise val is only done at end of training; wandb sweep requires val=True; UPDATE: val is done every 5 epochs
-      #"cfg": "D:\\Work\\ML_Projects\\food_classifier\\custom_default.yaml", # required for adding 'val_interval' for monkey-patching validation frequency in training; otherwise, hard-code 'val_interval'
-      #"val_interval": 5,
-      "plots": True, # shows multiple plots for evaluation; provides various charts that are useful in wandb; test if this slows down process
-      "seed": 0,
-      #"workers": 8,
-      "use_wandb": True,
-      #half
-   }
-
-   tune_args = {
-      "iterations": 20,
-      "use_ray": True,
-      "use_sweep": False,
-      #"optuna": False, # only with ray
-      "search_space": search_space_freeze,
-      "grace_period": 10, # only with ray
-   }
+   external_args, train_args, tune_args, hyperparameters = compile_args("./config_train.yaml")
 
    if train_args['use_wandb']: # to suppress wandb-related warnings from imports
       import wandb
       from wandb.integration.ultralytics import add_wandb_callback
 
-   model_pth = "./models/pretrained/yolo11m-seg.pt" # medium seems to do best
-   process = 'train'
-   cross_val = False
-
-   external_args, train_args, tune_args = compile_args("./config.yaml")
-
    process = external_args['process']
-   model_pth = external_args['model_pth'] # medium seems to do best
+   model_pth = external_args['model_pth']
    cross_val = external_args['cross_val']
-
-   if process == 'tune':
-       
-
-   full_args = {**train_args, **tune_args}
    
-   full_args
-   # Note: tuning takes both train and tune args
-   run_process(model_pth, cv_path, train_args, tune_args, params2, process, cross_val) # for reg training perhaps add wandb callback
+   if process == 'train':
+       full_args = train_args
+   elif process == 'tune':
+       full_args = {**train_args, **tune_args}
 
    run_process(
-       process=process
-
+      process=process,
+      process_args=full_args,
+      external_args=external_args,
+      hyperparameters=hyperparameters
    )
    # consider running val on training set
    #results = model.val(data='path/to/your/data.yaml', task='test') # add json_save; maybe split not task
@@ -912,42 +799,4 @@ if __name__ == '__main__':
    # train independently on model architecture sizes
    # tune on freeze layers (tune w/ parameters like lr, batch size)
    # tune on rest of hyperparameters
-
-   sweep_name = "testing_sweep7"
-   with open("sweep.yaml") as f:
-      sweep_yaml = yaml.safe_load(f)
-   
-   sweep_id = wandb.sweep(sweep=sweep_yaml, project=sweep_name) # creates sweep
-   wandb.agent(sweep_id, function=lambda: train2(sweep_name, train_args), count=2)
-   raise ImportError
-   wandb.agent(sweep_id, function=lambda: ultralytic_train(
-            model="./models/pretrained/yolo11n-seg.pt", 
-            data="D:/Work/ML_projects/food_classifier/datasets/full/coco_seg.yaml", 
-            project="runs/segment/ignore", 
-            name="tune_sweep",
-            use_sweep=True, 
-            wandb_project="testing_sweep7",
-            **{**train_args, **tune_args, **params2}
-         ), count=2) # runs agent on sweep
-   raise ImportError
-   model = YOLO("./models/pretrained/yolo11x-seg.pt")
-   params = {
-      "lr0": 0.0001,
-      "batch": 8,
-      "cls": 0.7
-   }
-   model.tune(data="D:/Work/ML_projects/food_classifier/datasets/full/coco_seg.yaml", 
-              epochs=3, iterations=2, imgsz=640, use_ray=False, fraction=0.1, freeze=20, device='cuda', task='segment', plots=False, val=True, project="runs/segment/test_noray", **params)
-   #train()
-    #sweep_id = wandb.sweep(sweep=sweep_configuration, project="testing_sweep2")
-
-    #wandb.agent(sweep_id, function=train, count=10)
-    #print(torch.__version__)
-    #print(torch.version.cuda)
-    #print(torch.cuda.is_available())
-    #torch.cuda.set_device(0)
-    #wandb.login(key="db8fe96e97bd9914ccb3a065a1206ed944718e2e")
-
-    #train()
-    
    

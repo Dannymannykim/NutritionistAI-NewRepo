@@ -13,3 +13,4 @@ wandb/
 true_masks/
 yolo11n.pt
 yolov8n-seg.pt
+note.txt

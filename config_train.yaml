@@ -1,0 +1,32 @@
+external:
+  model_pth: "./models/pretrained/yolo11m-seg.pt" # medium seems to do best overall
+  dataset: "D:/Work/ML_projects/food_classifier/datasets/filtered_v1/coco_seg.yaml"
+  process: train
+  cross_val: false
+  #cv_path: "D:/Work/ML_projects/food_classifier/datasets/cv/cv_5_0-unstratified-visual"
+train:
+  epochs: 50
+  batch: 8   # best batch size depends on model used; [obsolete] 32 seems best; 64 too much
+  optimizer: auto  # "AdamW" also possible
+  imgsz: 640  # 768 seems to error
+  freeze: 11 #null  # e.g., 11 to freeze backbone layers
+  fraction: 1.0
+  classes: null
+  rect: false  # not compatible with wandb sweep due to resize error
+  multi_scale: false
+  cos_lr: false  # False if low epochs; True may help convergence over long runs
+  overlap_mask: false  # False for instance seg probably
+  cache: disk  # "True" / "ram" may be faster
+  save: true
+  val: true   # wandb sweep requires val=True; validation runs every 5 epochs by default
+  plots: true # produces evaluation plots for W&B
+  seed: 0
+  use_wandb: true
+  # exist_ok: false
+  # workers: 8
+  # cfg: "D:\\Work\\ML_Projects\\food_classifier\\custom_default.yaml"
+  # val_interval: 5
+  # half:
+hyperparameters:
+  lr0: 0.07552710906155273
+  batch: 16
