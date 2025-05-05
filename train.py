@@ -792,7 +792,7 @@ if __name__ == '__main__':
       external_args=external_args,
       hyperparameters=hyperparameters
    )
-   # consider running val on training set
+   
    #results = model.val(data='path/to/your/data.yaml', task='test') # add json_save; maybe split not task
    raise ImportError
    

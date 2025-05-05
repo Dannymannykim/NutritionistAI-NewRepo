@@ -8,7 +8,7 @@ import cv2
 #from ultralytics.data.utils import visualize_image_annotations
 
 
-# https://github.com/jamesjg/FoodInsSeg/blob/main/visualize.py
+# from: https://github.com/jamesjg/FoodInsSeg/blob/main/visualize.py
 if __name__=='__main__':
 
     

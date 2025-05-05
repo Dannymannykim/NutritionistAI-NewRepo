@@ -13,7 +13,6 @@ def get_labels_from_file(file_path):
 
 if __name__ == "__main__":
 
-    # Example usage:
     #folder = "anotations_yolo/labels/foodins_train"
     target_class = 99  # class you’re searching for
     move = False

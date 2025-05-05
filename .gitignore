@@ -10,7 +10,11 @@ datasets/
 runs/
 models/pretrained/
 wandb/
+__pycache__/
 true_masks/
 yolo11n.pt
 yolov8n-seg.pt
 note.txt
+food_nickel.jpg
+nickel.jpeg
+usda_info.py
