@@ -1,6 +1,6 @@
 # Food Classification & Nutrient Estimation Framework
 
-This project aims to classify food items in images and estimating nutritional information.  
+This project aims to classify over 80 food items in images and estimate calories/nutritional information.  
 The workflow integrates image segmentation, classical computer vision, and LLM-based nutrient estimation.  
 
 **Segmentation Types:**  
